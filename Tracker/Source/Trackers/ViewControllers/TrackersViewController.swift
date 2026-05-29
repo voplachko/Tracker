@@ -9,6 +9,9 @@ import UIKit
 
 final class TrackersViewController: UIViewController {
     
+    private let trackersStore = TrackersStore()
+    private var selectedDate: Date = Date()
+    
     private let placeholderImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(resource: .emptyTrackers)
@@ -83,6 +86,17 @@ final class TrackersViewController: UIViewController {
     }
     
     @objc private func addTrackerButtonTapped() {
-        // TODO: - add later
+//        let tracker = Tracker(
+//            id: UUID(),
+//            title: "Читать книгу",
+//            color: .systemBlue,
+//            emoji: "📚",
+//            schedule: [.monday]
+//        )
+//
+//        trackersStore.addTracker(
+//            tracker,
+//            toCategoryWithTitle: "Полезные привычки"
+//        )
     }
 }
