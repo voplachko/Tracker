@@ -14,6 +14,7 @@ extension UIFont {
     static let ypBold12 = UIFont.systemFont(ofSize: 12, weight: .bold)
     static let ypBold14 = UIFont.systemFont(ofSize: 14, weight: .bold)
     static let ypBold16 = UIFont.systemFont(ofSize: 16, weight: .bold)
+    static let ypBold19 = UIFont.systemFont(ofSize: 19, weight: .bold)
     static let ypBold20 = UIFont.systemFont(ofSize: 20, weight: .bold)
 
     // MARK: - Medium
@@ -27,4 +28,5 @@ extension UIFont {
     static let ypRegular12 = UIFont.systemFont(ofSize: 12, weight: .regular)
     static let ypRegular14 = UIFont.systemFont(ofSize: 14, weight: .regular)
     static let ypRegular16 = UIFont.systemFont(ofSize: 16, weight: .regular)
+    static let ypRegular17 = UIFont.systemFont(ofSize: 17, weight: .regular)
 }
