@@ -9,13 +9,29 @@ import UIKit
 
 final class TrackersViewController: UIViewController {
     
-    private let trackersStore = TrackersStore()
-    
+    private let categoryStore: TrackerCategoryStore
+    private let recordStore: TrackerRecordStore
+
     private var selectedDate = Date() {
         didSet { updateVisibleTrackers() }
     }
-    
+
     private var visibleCategories: [TrackerCategory] = []
+    private var completedRecords: [TrackerRecord] = []
+
+    init(categoryStore: TrackerCategoryStore, recordStore: TrackerRecordStore) {
+        self.categoryStore = categoryStore
+        self.recordStore = recordStore
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    private enum Constants {
+        static let defaultCategoryTitle = "По умолчанию"
+    }
     
     // MARK: - UI
     
@@ -79,6 +95,8 @@ final class TrackersViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        categoryStore.delegate = self
+        recordStore.delegate = self
         setupView()
         setupNavigationBar()
         setupCollectionView()
@@ -184,31 +202,36 @@ private extension TrackersViewController {
 private extension TrackersViewController {
     func updateVisibleTrackers() {
         visibleCategories = filteredCategories(for: selectedDate)
+        completedRecords = (try? recordStore.records()) ?? []
         updatePlaceholder()
         collectionView.reloadData()
     }
-    
+
     func updatePlaceholder() {
         let shouldShowPlaceholder = visibleCategories.isEmpty
         placeholderStackView.isHidden = !shouldShowPlaceholder
         collectionView.isHidden = shouldShowPlaceholder
     }
-    
+
     func filteredCategories(for date: Date) -> [TrackerCategory] {
         guard let selectedWeekDay = WeekDay(date: date) else { return [] }
-        
-        return trackersStore.categories.compactMap { category in
+
+        let categories = (try? categoryStore.categories()) ?? []
+        return categories.compactMap { category in
             let trackers = category.trackers.filter { $0.schedule.contains(selectedWeekDay) }
             return trackers.isEmpty ? nil : TrackerCategory(title: category.title, trackers: trackers)
         }
     }
-    
+
     func totalCompletions(for tracker: Tracker) -> Int {
-        trackersStore.completedTrackers.filter { $0.trackerId == tracker.id }.count
+        completedRecords.filter { $0.trackerId == tracker.id }.count
     }
-    
+
     func isCompleted(_ tracker: Tracker) -> Bool {
-        trackersStore.isTrackerCompleted(tracker, on: selectedDate)
+        let day = Calendar.current.startOfDay(for: selectedDate)
+        return completedRecords.contains {
+            $0.trackerId == tracker.id && Calendar.current.startOfDay(for: $0.date) == day
+        }
     }
 }
 
@@ -241,22 +264,25 @@ private extension TrackersViewController {
     ) {
         let creationViewController = TrackerCreationViewController(kind: kind)
         creationViewController.onCreate = { [weak self] tracker in
-            self?.trackersStore.addTracker(tracker, toCategoryWithTitle: "По умолчанию")
+            try? self?.categoryStore.addTracker(tracker, toCategoryWithTitle: Constants.defaultCategoryTitle)
             self?.updateVisibleTrackers()
         }
 
         navigationController?.pushViewController(creationViewController, animated: true)
     }
-    
+
     func toggleCompletion(for tracker: Tracker) {
         guard !Calendar.current.isDateInFuture(selectedDate) else { return }
-        
-        if trackersStore.isTrackerCompleted(tracker, on: selectedDate) {
-            trackersStore.unmarkTrackerCompleted(tracker, on: selectedDate)
+
+        let day = Calendar.current.startOfDay(for: selectedDate)
+        let record = TrackerRecord(trackerId: tracker.id, date: day)
+
+        if isCompleted(tracker) {
+            try? recordStore.removeRecord(record)
         } else {
-            trackersStore.markTrackerCompleted(tracker, on: selectedDate)
+            try? recordStore.addRecord(record)
         }
-        
+
         updateVisibleTrackers()
     }
 }
@@ -321,3 +347,17 @@ extension TrackersViewController: UICollectionViewDataSource {
 // MARK: - UICollectionViewDelegate
 
 extension TrackersViewController: UICollectionViewDelegate {}
+
+// MARK: - Store updates
+
+extension TrackersViewController: TrackerCategoryStoreDelegate {
+    func categoryStoreDidChange() {
+        updateVisibleTrackers()
+    }
+}
+
+extension TrackersViewController: TrackerRecordStoreDelegate {
+    func recordStoreDidChange() {
+        updateVisibleTrackers()
+    }
+}
