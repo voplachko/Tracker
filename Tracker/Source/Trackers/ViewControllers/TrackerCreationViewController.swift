@@ -13,6 +13,26 @@ final class TrackerCreationViewController: UIViewController {
         case irregularEvent
     }
 
+    enum CreationRow: Equatable {
+        case category
+        case schedule
+
+        var title: String {
+            switch self {
+            case .category: return "Категория"
+            case .schedule: return "Расписание"
+            }
+        }
+    }
+
+    private enum Constants {
+        static let titleCharacterLimit = 38
+        static let rowHeight: CGFloat = 75
+        static let textFieldHeight: CGFloat = 75
+        static let buttonsHeight: CGFloat = 60
+        static let cellReuseIdentifier = "CreationCell"
+    }
+
     var onCreate: ((Tracker) -> Void)?
 
     private let kind: TrackerKind
@@ -54,7 +74,7 @@ final class TrackerCreationViewController: UIViewController {
 
     private let limitLabel: UILabel = {
         let label = UILabel()
-        label.text = "Ограничение 38 символов"
+        label.text = "Ограничение \(Constants.titleCharacterLimit) символов"
         label.textColor = .ypRed
         label.font = .ypRegular17
         label.textAlignment = .center
@@ -114,8 +134,9 @@ final class TrackerCreationViewController: UIViewController {
         super.init(nibName: nil, bundle: nil)
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        nil
     }
 
     deinit {
@@ -139,12 +160,12 @@ final class TrackerCreationViewController: UIViewController {
 }
 
 private extension TrackerCreationViewController {
-    var rows: [String] {
+    var rows: [CreationRow] {
         switch kind {
         case .habit:
-            return ["Категория", "Расписание"]
+            return [.category, .schedule]
         case .irregularEvent:
-            return ["Категория"]
+            return [.category]
         }
     }
 
@@ -156,7 +177,7 @@ private extension TrackerCreationViewController {
     func setupTableView() {
         tableView.dataSource = self
         tableView.delegate = self
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "CreationCell")
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: Constants.cellReuseIdentifier)
     }
 
     func setupPickers() {
@@ -202,7 +223,7 @@ private extension TrackerCreationViewController {
             titleTextField.topAnchor.constraint(equalTo: contentView.topAnchor, constant: Dimen.x6),
             titleTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: Dimen.x4),
             titleTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -Dimen.x4),
-            titleTextField.heightAnchor.constraint(equalToConstant: 75),
+            titleTextField.heightAnchor.constraint(equalToConstant: Constants.textFieldHeight),
 
             limitLabel.topAnchor.constraint(equalTo: titleTextField.bottomAnchor, constant: Dimen.x1),
             limitLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
@@ -210,7 +231,7 @@ private extension TrackerCreationViewController {
             tableViewTopConstraint!,
             tableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: Dimen.x4),
             tableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -Dimen.x4),
-            tableView.heightAnchor.constraint(equalToConstant: CGFloat(rows.count) * 75),
+            tableView.heightAnchor.constraint(equalToConstant: CGFloat(rows.count) * Constants.rowHeight),
 
             emojiPickerView.topAnchor.constraint(equalTo: tableView.bottomAnchor, constant: Dimen.x8),
             emojiPickerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
@@ -224,7 +245,7 @@ private extension TrackerCreationViewController {
             buttonsStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: Dimen.x5),
             buttonsStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -Dimen.x5),
             buttonsBottomConstraint!,
-            buttonsStackView.heightAnchor.constraint(equalToConstant: 60)
+            buttonsStackView.heightAnchor.constraint(equalToConstant: Constants.buttonsHeight)
         ])
     }
 
@@ -247,9 +268,10 @@ private extension TrackerCreationViewController {
     }
 
     func updateCreateButtonState() {
-        let hasTitle = !(titleTextField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let title = titleTextField.text ?? ""
+        let hasTitle = !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         let hasSchedule = kind == .irregularEvent || !selectedSchedule.isEmpty
-        let hasValidLength = (titleTextField.text ?? "").count <= 38
+        let hasValidLength = title.count <= Constants.titleCharacterLimit
         let hasEmoji = emojiPickerView.selectedEmoji != nil
         let hasColor = colorPickerView.selectedColor != nil
 
@@ -274,7 +296,7 @@ private extension TrackerCreationViewController {
     }
 
     func updateLimitLabelState(for text: String) {
-        let isExceeded = text.count > 38
+        let isExceeded = text.count > Constants.titleCharacterLimit
         limitLabel.isHidden = !isExceeded
         updateLayoutForLimitLabel()
     }
@@ -378,7 +400,7 @@ extension TrackerCreationViewController: UITextFieldDelegate {
         updateLayoutForLimitLabel()
         updateLimitLabelState(for: updatedText)
 
-        return updatedText.count <= 38
+        return updatedText.count <= Constants.titleCharacterLimit
     }
 
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -393,12 +415,13 @@ extension TrackerCreationViewController: UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CreationCell", for: indexPath)
+        let row = rows[indexPath.row]
+        let cell = tableView.dequeueReusableCell(withIdentifier: Constants.cellReuseIdentifier, for: indexPath)
         var content = cell.defaultContentConfiguration()
-        content.text = rows[indexPath.row]
+        content.text = row.title
         content.textProperties.font = .ypRegular16
 
-        if rows[indexPath.row] == "Расписание" {
+        if row == .schedule {
             content.secondaryText = scheduleSubtitle()
             content.secondaryTextProperties.font = .ypRegular17
             content.secondaryTextProperties.color = .ypGray
@@ -420,7 +443,7 @@ extension TrackerCreationViewController: UITableViewDataSource {
 
 extension TrackerCreationViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard rows[indexPath.row] == "Расписание" else { return }
+        guard rows[indexPath.row] == .schedule else { return }
 
         let scheduleViewController = ScheduleViewController(selectedDays: selectedSchedule)
         scheduleViewController.onScheduleSelected = { [weak self] schedule in
@@ -430,6 +453,6 @@ extension TrackerCreationViewController: UITableViewDelegate {
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        75
+        Constants.rowHeight
     }
 }

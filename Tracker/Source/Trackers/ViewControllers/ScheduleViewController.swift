@@ -8,6 +8,11 @@
 import UIKit
 
 final class ScheduleViewController: UIViewController {
+    private enum Constants {
+        static let rowHeight: CGFloat = 75
+        static let doneButtonHeight: CGFloat = 60
+    }
+
     var selectedDays: Set<WeekDay>
     var onScheduleSelected: ((Set<WeekDay>) -> Void)?
 
@@ -37,8 +42,9 @@ final class ScheduleViewController: UIViewController {
         super.init(nibName: nil, bundle: nil)
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        nil
     }
 
     override func viewDidLoad() {
@@ -73,12 +79,12 @@ private extension ScheduleViewController {
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: Dimen.x6),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: Dimen.x4),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -Dimen.x4),
-            tableView.heightAnchor.constraint(equalToConstant: CGFloat(WeekDay.allCases.count) * 75),
+            tableView.heightAnchor.constraint(equalToConstant: CGFloat(WeekDay.allCases.count) * Constants.rowHeight),
 
             doneButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: Dimen.x5),
             doneButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -Dimen.x5),
             doneButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -Dimen.x4),
-            doneButton.heightAnchor.constraint(equalToConstant: 60)
+            doneButton.heightAnchor.constraint(equalToConstant: Constants.doneButtonHeight)
         ])
     }
 
@@ -136,6 +142,6 @@ extension ScheduleViewController: UITableViewDataSource {
 
 extension ScheduleViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        75
+        Constants.rowHeight
     }
 }
