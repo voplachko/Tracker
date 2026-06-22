@@ -10,26 +10,36 @@ import UIKit
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
 
-    var window: UIWindow?
+    // MARK: - Data layer (composition root)
 
-    func application(_ application: UIApplication,
-                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+    private(set) lazy var trackerStore = TrackerStore(
+        context: DataBaseStore.shared.viewContext
+    )
 
-        window = UIWindow()
-        window?.rootViewController = TabBarController()
-        window?.makeKeyAndVisible()
+    private(set) lazy var categoryStore = TrackerCategoryStore(
+        context: DataBaseStore.shared.viewContext,
+        trackerStore: trackerStore
+    )
 
-        return true
+    private(set) lazy var recordStore = TrackerRecordStore(
+        context: DataBaseStore.shared.viewContext,
+        trackerStore: trackerStore
+    )
+
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+    ) -> Bool {
+        true
     }
 
-    // MARK: UISceneSession Lifecycle
+    // MARK: - UISceneSession Lifecycle
 
-    func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
-        return UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
+    func application(
+        _ application: UIApplication,
+        configurationForConnecting connectingSceneSession: UISceneSession,
+        options: UIScene.ConnectionOptions
+    ) -> UISceneConfiguration {
+        UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
     }
-
-    func application(_ application: UIApplication, didDiscardSceneSessions sceneSessions: Set<UISceneSession>) {}
-
-
 }
-

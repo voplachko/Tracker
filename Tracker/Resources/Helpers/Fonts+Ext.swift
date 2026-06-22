@@ -16,6 +16,7 @@ extension UIFont {
     static let ypBold16 = UIFont.systemFont(ofSize: 16, weight: .bold)
     static let ypBold19 = UIFont.systemFont(ofSize: 19, weight: .bold)
     static let ypBold20 = UIFont.systemFont(ofSize: 20, weight: .bold)
+    static let ypBold32 = UIFont.systemFont(ofSize: 32, weight: .bold)
 
     // MARK: - Medium
 

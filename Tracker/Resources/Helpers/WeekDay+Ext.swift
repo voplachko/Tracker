@@ -47,3 +47,20 @@ extension WeekDay {
         }
     }
 }
+
+extension WeekDay {
+    static func encode(_ days: Set<WeekDay>) -> String {
+        WeekDay.allCases
+            .filter { days.contains($0) }
+            .map { String($0.rawValue) }
+            .joined(separator: ",")
+    }
+
+    static func decode(_ string: String) -> Set<WeekDay> {
+        let days = string
+            .split(separator: ",")
+            .compactMap { Int($0) }
+            .compactMap { WeekDay(rawValue: $0) }
+        return Set(days)
+    }
+}

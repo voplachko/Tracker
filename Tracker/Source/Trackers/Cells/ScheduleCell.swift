@@ -39,7 +39,8 @@ final class ScheduleCell: UITableViewCell {
         ])
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
-        fatalError()
+        nil
     }
 }
