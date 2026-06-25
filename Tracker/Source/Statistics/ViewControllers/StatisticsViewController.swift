@@ -8,13 +8,16 @@
 import UIKit
 
 final class StatisticsViewController: UIViewController {
+
+    private let viewModel = StatisticsViewModel()
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         setupView()
         setupNavigationBar()
     }
-    
+
     private func setupView() {
         view.backgroundColor = .systemBackground
     }
@@ -22,7 +25,7 @@ final class StatisticsViewController: UIViewController {
     private func setupNavigationBar() {
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
-        
-        title = "Статистика"
+
+        title = viewModel.screenTitle
     }
 }

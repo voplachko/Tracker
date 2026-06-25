@@ -12,6 +12,8 @@ final class TrackerCell: UICollectionViewCell {
 
     var onToggle: (() -> Void)?
 
+    var previewTargetView: UIView { cardView }
+
     private let cardView: UIView = {
         let view = UIView()
         view.layer.cornerRadius = Dimen.x4
@@ -43,6 +45,17 @@ final class TrackerCell: UICollectionViewCell {
         label.textColor = .white
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
+    }()
+
+    private let pinImageView: UIImageView = {
+        let imageView = UIImageView()
+        let config = UIImage.SymbolConfiguration(pointSize: 12, weight: .semibold)
+        imageView.image = UIImage(systemName: "pin.fill", withConfiguration: config)
+        imageView.tintColor = .white
+        imageView.contentMode = .center
+        imageView.isHidden = true
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
     }()
 
     private let counterLabel: UILabel = {
@@ -80,6 +93,7 @@ final class TrackerCell: UICollectionViewCell {
         onToggle = nil
         toggleButton.alpha = 1
         toggleButton.isEnabled = true
+        pinImageView.isHidden = true
     }
 
     func configure(with tracker: Tracker, isCompleted: Bool, count: Int, date: Date) {
@@ -88,6 +102,7 @@ final class TrackerCell: UICollectionViewCell {
         cardView.backgroundColor = tracker.color
         emojiLabel.text = tracker.emoji
         titleLabel.text = tracker.title
+        pinImageView.isHidden = !tracker.isPinned
         counterLabel.text = "\(count) \(Self.daysString(for: count))"
 
         toggleButton.backgroundColor = tracker.color
@@ -119,6 +134,7 @@ private extension TrackerCell {
         cardView.addSubview(emojiBackgroundView)
         emojiBackgroundView.addSubview(emojiLabel)
         cardView.addSubview(titleLabel)
+        cardView.addSubview(pinImageView)
     }
 
     func setupConstraints() {
@@ -139,6 +155,11 @@ private extension TrackerCell {
             titleLabel.leadingAnchor.constraint(equalTo: cardView.leadingAnchor, constant: Dimen.x3),
             titleLabel.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -Dimen.x3),
             titleLabel.bottomAnchor.constraint(equalTo: cardView.bottomAnchor, constant: -Dimen.x3),
+
+            pinImageView.centerYAnchor.constraint(equalTo: emojiBackgroundView.centerYAnchor),
+            pinImageView.trailingAnchor.constraint(equalTo: cardView.trailingAnchor, constant: -Dimen.x3),
+            pinImageView.widthAnchor.constraint(equalToConstant: Dimen.x6),
+            pinImageView.heightAnchor.constraint(equalToConstant: Dimen.x6),
 
             toggleButton.topAnchor.constraint(equalTo: cardView.bottomAnchor, constant: Dimen.x2),
             toggleButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -Dimen.x3),

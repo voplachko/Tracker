@@ -8,37 +8,18 @@
 import UIKit
 
 final class TrackerCreationViewController: UIViewController {
-    enum TrackerKind {
-        case habit
-        case irregularEvent
-    }
-
-    enum CreationRow: Equatable {
-        case category
-        case schedule
-
-        var title: String {
-            switch self {
-            case .category: return "Категория"
-            case .schedule: return "Расписание"
-            }
-        }
-    }
 
     private enum Constants {
-        static let titleCharacterLimit = 38
         static let rowHeight: CGFloat = 75
         static let textFieldHeight: CGFloat = 75
         static let buttonsHeight: CGFloat = 60
         static let cellReuseIdentifier = "CreationCell"
     }
 
-    var onCreate: ((Tracker) -> Void)?
+    var onCreate: ((Tracker, String) -> Void)?
+    var onSave: ((Tracker, String) -> Void)?
 
-    private let kind: TrackerKind
-    private var selectedSchedule: Set<WeekDay> = [] {
-        didSet { tableView.reloadData(); updateCreateButtonState() }
-    }
+    private let viewModel: TrackerCreationViewModel
 
     private var tableViewTopConstraint: NSLayoutConstraint?
     private var buttonsBottomConstraint: NSLayoutConstraint?
@@ -72,9 +53,9 @@ final class TrackerCreationViewController: UIViewController {
         return textField
     }()
 
-    private let limitLabel: UILabel = {
+    private lazy var limitLabel: UILabel = {
         let label = UILabel()
-        label.text = "Ограничение \(Constants.titleCharacterLimit) символов"
+        label.text = "Ограничение \(viewModel.titleCharacterLimit) символов"
         label.textColor = .ypRed
         label.font = .ypRegular17
         label.textAlignment = .center
@@ -94,6 +75,15 @@ final class TrackerCreationViewController: UIViewController {
         return tableView
     }()
 
+    private lazy var daysCounterLabel: UILabel = {
+        let label = UILabel()
+        label.font = .ypBold32
+        label.textColor = .ypBlackDay
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+
     private let emojiPickerView = EmojiPickerView()
     private let colorPickerView = ColorPickerView()
 
@@ -111,11 +101,12 @@ final class TrackerCreationViewController: UIViewController {
 
     private let createButton: UIButton = {
         let button = UIButton(type: .system)
-        button.backgroundColor = .ypBlackDay
+        button.backgroundColor = .ypGray
         button.setTitle("Создать", for: .normal)
         button.setTitleColor(.white, for: .normal)
         button.titleLabel?.font = .ypMedium16
         button.layer.cornerRadius = Dimen.x4
+        button.isEnabled = false
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -130,7 +121,16 @@ final class TrackerCreationViewController: UIViewController {
     }()
 
     init(kind: TrackerKind) {
-        self.kind = kind
+        self.viewModel = TrackerCreationViewModel(kind: kind)
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    init(editing tracker: Tracker, categoryTitle: String, daysCount: Int) {
+        self.viewModel = TrackerCreationViewModel(
+            editing: tracker,
+            categoryTitle: categoryTitle,
+            daysCount: daysCount
+        )
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -153,24 +153,18 @@ final class TrackerCreationViewController: UIViewController {
         setupPickers()
         setupConstraints()
         setupActions()
-        updateCreateButtonState()
+        bindViewModel()
+        populateInitialState()
         setupKeyboardDismiss()
         observeKeyboard()
     }
 }
 
-private extension TrackerCreationViewController {
-    var rows: [CreationRow] {
-        switch kind {
-        case .habit:
-            return [.category, .schedule]
-        case .irregularEvent:
-            return [.category]
-        }
-    }
+// MARK: - Setup
 
+private extension TrackerCreationViewController {
     func setupView() {
-        title = kind == .habit ? "Новая привычка" : "Новое нерегулярное событие"
+        title = viewModel.screenTitle
         view.backgroundColor = .systemBackground
     }
 
@@ -181,8 +175,12 @@ private extension TrackerCreationViewController {
     }
 
     func setupPickers() {
-        emojiPickerView.onSelectionChange = { [weak self] in self?.updateCreateButtonState() }
-        colorPickerView.onSelectionChange = { [weak self] in self?.updateCreateButtonState() }
+        emojiPickerView.onSelectionChange = { [weak self] in
+            self?.viewModel.setEmoji(self?.emojiPickerView.selectedEmoji)
+        }
+        colorPickerView.onSelectionChange = { [weak self] in
+            self?.viewModel.setColor(self?.colorPickerView.selectedColor)
+        }
     }
 
     func setupConstraints() {
@@ -208,7 +206,27 @@ private extension TrackerCreationViewController {
             constant: -Dimen.x4
         )
 
+        let titleFieldTopConstraint: NSLayoutConstraint
+        if viewModel.isEditing {
+            contentView.addSubview(daysCounterLabel)
+            NSLayoutConstraint.activate([
+                daysCounterLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: Dimen.x6),
+                daysCounterLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: Dimen.x4),
+                daysCounterLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -Dimen.x4)
+            ])
+            titleFieldTopConstraint = titleTextField.topAnchor.constraint(
+                equalTo: daysCounterLabel.bottomAnchor,
+                constant: Dimen.x10
+            )
+        } else {
+            titleFieldTopConstraint = titleTextField.topAnchor.constraint(
+                equalTo: contentView.topAnchor,
+                constant: Dimen.x6
+            )
+        }
+
         NSLayoutConstraint.activate([
+            titleFieldTopConstraint,
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -220,7 +238,6 @@ private extension TrackerCreationViewController {
             contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
             contentView.widthAnchor.constraint(equalTo: scrollView.frameLayoutGuide.widthAnchor),
 
-            titleTextField.topAnchor.constraint(equalTo: contentView.topAnchor, constant: Dimen.x6),
             titleTextField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: Dimen.x4),
             titleTextField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -Dimen.x4),
             titleTextField.heightAnchor.constraint(equalToConstant: Constants.textFieldHeight),
@@ -231,7 +248,7 @@ private extension TrackerCreationViewController {
             tableViewTopConstraint!,
             tableView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: Dimen.x4),
             tableView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -Dimen.x4),
-            tableView.heightAnchor.constraint(equalToConstant: CGFloat(rows.count) * Constants.rowHeight),
+            tableView.heightAnchor.constraint(equalToConstant: CGFloat(viewModel.rows.count) * Constants.rowHeight),
 
             emojiPickerView.topAnchor.constraint(equalTo: tableView.bottomAnchor, constant: Dimen.x8),
             emojiPickerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
@@ -255,6 +272,44 @@ private extension TrackerCreationViewController {
         createButton.addTarget(self, action: #selector(createTapped), for: .touchUpInside)
     }
 
+    func populateInitialState() {
+        createButton.setTitle(viewModel.actionButtonTitle, for: .normal)
+
+        if viewModel.isEditing {
+            titleTextField.text = viewModel.title
+            daysCounterLabel.text = viewModel.daysCountText
+            emojiPickerView.select(emoji: viewModel.selectedEmoji)
+            colorPickerView.select(color: viewModel.selectedColor)
+        }
+
+        viewModel.refresh()
+    }
+
+    func bindViewModel() {
+        viewModel.onCreateEnabledChanged = { [weak self] isEnabled in
+            self?.createButton.isEnabled = isEnabled
+            self?.createButton.backgroundColor = isEnabled ? .ypBlackDay : .ypGray
+        }
+
+        viewModel.onCategoryChanged = { [weak self] _ in
+            self?.tableView.reloadData()
+        }
+
+        viewModel.onScheduleChanged = { [weak self] _ in
+            self?.tableView.reloadData()
+        }
+
+        viewModel.onLimitWarningChanged = { [weak self] isExceeded in
+            guard let self else { return }
+            self.limitLabel.isHidden = !isExceeded
+            self.updateLayoutForLimitLabel()
+        }
+    }
+}
+
+// MARK: - Layout helpers
+
+private extension TrackerCreationViewController {
     func updateLayoutForLimitLabel() {
         let anchorView = limitLabel.isHidden ? titleTextField : limitLabel
 
@@ -262,43 +317,18 @@ private extension TrackerCreationViewController {
         tableViewTopConstraint = tableView.topAnchor.constraint(equalTo: anchorView.bottomAnchor, constant: Dimen.x6)
         tableViewTopConstraint?.isActive = true
 
+        guard view.window != nil else { return }
         UIView.animate(withDuration: 0.2) {
             self.view.layoutIfNeeded()
         }
     }
+}
 
-    func updateCreateButtonState() {
-        let title = titleTextField.text ?? ""
-        let hasTitle = !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        let hasSchedule = kind == .irregularEvent || !selectedSchedule.isEmpty
-        let hasValidLength = title.count <= Constants.titleCharacterLimit
-        let hasEmoji = emojiPickerView.selectedEmoji != nil
-        let hasColor = colorPickerView.selectedColor != nil
+// MARK: - Actions
 
-        let isEnabled = hasTitle && hasSchedule && hasValidLength && hasEmoji && hasColor
-
-        createButton.isEnabled = isEnabled
-        createButton.backgroundColor = isEnabled ? .ypBlackDay : .ypGray
-    }
-
-    func scheduleSubtitle() -> String? {
-        guard !selectedSchedule.isEmpty else { return nil }
-        if selectedSchedule.count == WeekDay.allCases.count { return "Каждый день" }
-        return WeekDay.allCases
-            .filter { selectedSchedule.contains($0) }
-            .map { $0.shortTitle }
-            .joined(separator: ", ")
-    }
-
+private extension TrackerCreationViewController {
     @objc func textFieldChanged() {
-        updateLimitLabelState(for: titleTextField.text ?? "")
-        updateCreateButtonState()
-    }
-
-    func updateLimitLabelState(for text: String) {
-        let isExceeded = text.count > Constants.titleCharacterLimit
-        limitLabel.isHidden = !isExceeded
-        updateLayoutForLimitLabel()
+        viewModel.updateTitle(titleTextField.text ?? "")
     }
 
     @objc func cancelTapped() {
@@ -306,32 +336,12 @@ private extension TrackerCreationViewController {
     }
 
     @objc func createTapped() {
-        let trimmedTitle = (titleTextField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        guard
-            !trimmedTitle.isEmpty,
-            let emoji = emojiPickerView.selectedEmoji,
-            let color = colorPickerView.selectedColor
-        else { return }
-
-        let schedule: Set<WeekDay>
-
-        switch kind {
-        case .habit:
-            guard !selectedSchedule.isEmpty else { return }
-            schedule = selectedSchedule
-        case .irregularEvent:
-            schedule = Set(WeekDay.allCases)
+        guard let result = viewModel.makeTracker() else { return }
+        if viewModel.isEditing {
+            onSave?(result.tracker, result.categoryTitle)
+        } else {
+            onCreate?(result.tracker, result.categoryTitle)
         }
-
-        let tracker = Tracker(
-            id: UUID(),
-            title: trimmedTitle,
-            color: color,
-            emoji: emoji,
-            schedule: schedule
-        )
-
-        onCreate?(tracker)
         dismiss(animated: true)
     }
 
@@ -340,7 +350,6 @@ private extension TrackerCreationViewController {
             target: self,
             action: #selector(hideKeyboard)
         )
-
         tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
     }
@@ -383,6 +392,8 @@ private extension TrackerCreationViewController {
     }
 }
 
+// MARK: - UITextFieldDelegate
+
 extension TrackerCreationViewController: UITextFieldDelegate {
     func textField(
         _ textField: UITextField,
@@ -390,17 +401,9 @@ extension TrackerCreationViewController: UITextFieldDelegate {
         replacementString string: String
     ) -> Bool {
         let currentText = textField.text ?? ""
-
-        guard let textRange = Range(range, in: currentText) else {
-            return false
-        }
-
+        guard let textRange = Range(range, in: currentText) else { return false }
         let updatedText = currentText.replacingCharacters(in: textRange, with: string)
-
-        updateLayoutForLimitLabel()
-        updateLimitLabelState(for: updatedText)
-
-        return updatedText.count <= Constants.titleCharacterLimit
+        return updatedText.count <= viewModel.titleCharacterLimit
     }
 
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -409,23 +412,28 @@ extension TrackerCreationViewController: UITextFieldDelegate {
     }
 }
 
+// MARK: - UITableViewDataSource
+
 extension TrackerCreationViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        rows.count
+        viewModel.rows.count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let row = rows[indexPath.row]
+        let row = viewModel.rows[indexPath.row]
         let cell = tableView.dequeueReusableCell(withIdentifier: Constants.cellReuseIdentifier, for: indexPath)
         var content = cell.defaultContentConfiguration()
         content.text = row.title
         content.textProperties.font = .ypRegular16
 
-        if row == .schedule {
-            content.secondaryText = scheduleSubtitle()
-            content.secondaryTextProperties.font = .ypRegular17
-            content.secondaryTextProperties.color = .ypGray
+        switch row {
+        case .category:
+            content.secondaryText = viewModel.categorySubtitle
+        case .schedule:
+            content.secondaryText = viewModel.scheduleSubtitle
         }
+        content.secondaryTextProperties.font = .ypRegular17
+        content.secondaryTextProperties.color = .ypGray
 
         cell.contentConfiguration = content
         cell.backgroundColor = .ypBackgroundDay
@@ -441,18 +449,41 @@ extension TrackerCreationViewController: UITableViewDataSource {
     }
 }
 
+// MARK: - UITableViewDelegate
+
 extension TrackerCreationViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard rows[indexPath.row] == .schedule else { return }
-
-        let scheduleViewController = ScheduleViewController(selectedDays: selectedSchedule)
-        scheduleViewController.onScheduleSelected = { [weak self] schedule in
-            self?.selectedSchedule = schedule
+        switch viewModel.rows[indexPath.row] {
+        case .category:
+            showCategories()
+        case .schedule:
+            showSchedule()
         }
-        navigationController?.pushViewController(scheduleViewController, animated: true)
     }
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         Constants.rowHeight
+    }
+}
+
+// MARK: - Navigation
+
+private extension TrackerCreationViewController {
+    func showCategories() {
+        let categoriesViewModel = viewModel.makeCategoriesViewModel()
+        let categoriesViewController = CategoriesViewController(viewModel: categoriesViewModel)
+        categoriesViewController.onCategorySelect = { [weak self] title in
+            self?.viewModel.setCategory(title)
+        }
+        navigationController?.pushViewController(categoriesViewController, animated: true)
+    }
+
+    func showSchedule() {
+        let scheduleViewModel = ScheduleViewModel(selectedDays: viewModel.selectedSchedule)
+        let scheduleViewController = ScheduleViewController(viewModel: scheduleViewModel)
+        scheduleViewController.onScheduleSelected = { [weak self] schedule in
+            self?.viewModel.setSchedule(schedule)
+        }
+        navigationController?.pushViewController(scheduleViewController, animated: true)
     }
 }

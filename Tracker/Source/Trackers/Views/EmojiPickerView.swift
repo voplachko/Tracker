@@ -15,6 +15,12 @@ final class EmojiPickerView: UIView {
         return String.trackerEmojis[indexPath.item]
     }
 
+    func select(emoji: String?) {
+        guard let emoji, let index = String.trackerEmojis.firstIndex(of: emoji) else { return }
+        selectedIndexPath = IndexPath(item: index, section: 0)
+        collectionView.reloadData()
+    }
+
     private var selectedIndexPath: IndexPath?
 
     private let titleLabel: UILabel = {

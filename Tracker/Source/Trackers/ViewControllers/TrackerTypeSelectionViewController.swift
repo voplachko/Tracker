@@ -8,11 +8,13 @@
 import UIKit
 
 final class TrackerTypeSelectionViewController: UIViewController {
-    var onHabitSelected: (() -> Void)?
-    var onIrregularEventSelected: (() -> Void)?
 
-    private let habitButton = TrackerTypeButton(title: "Привычка")
-    private let irregularEventButton = TrackerTypeButton(title: "Нерегулярное событие")
+    var onTypeSelected: ((TrackerKind) -> Void)?
+
+    private let viewModel = TrackerTypeSelectionViewModel()
+
+    private lazy var habitButton = PrimaryButton(title: viewModel.habitTitle)
+    private lazy var irregularEventButton = PrimaryButton(title: viewModel.irregularEventTitle)
 
     private lazy var stackView: UIStackView = {
         let stackView = UIStackView(arrangedSubviews: [habitButton, irregularEventButton])
@@ -27,6 +29,7 @@ final class TrackerTypeSelectionViewController: UIViewController {
         setupView()
         setupConstraints()
         setupActions()
+        bindViewModel()
     }
 }
 
@@ -54,28 +57,17 @@ private extension TrackerTypeSelectionViewController {
         irregularEventButton.addTarget(self, action: #selector(irregularEventTapped), for: .touchUpInside)
     }
 
+    func bindViewModel() {
+        viewModel.onTypeSelected = { [weak self] kind in
+            self?.onTypeSelected?(kind)
+        }
+    }
+
     @objc func habitTapped() {
-        onHabitSelected?()
+        viewModel.selectHabit()
     }
 
     @objc func irregularEventTapped() {
-        onIrregularEventSelected?()
-    }
-}
-
-private final class TrackerTypeButton: UIButton {
-    init(title: String) {
-        super.init(frame: .zero)
-        setTitle(title, for: .normal)
-        setTitleColor(.white, for: .normal)
-        titleLabel?.font = .ypMedium16
-        backgroundColor = .ypBlackDay
-        layer.cornerRadius = Dimen.x4
-        translatesAutoresizingMaskIntoConstraints = false
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) {
-        nil
+        viewModel.selectIrregularEvent()
     }
 }

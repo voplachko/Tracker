@@ -62,6 +62,34 @@ final class TrackerCategoryStore: NSObject {
         try context.save()
     }
 
+    func updateTracker(_ tracker: Tracker, toCategoryWithTitle title: String) throws {
+        guard let trackerCoreData = try trackerStore.fetchTrackerCoreData(withId: tracker.id) else { return }
+        trackerStore.apply(tracker, to: trackerCoreData)
+        let categoryCoreData = try fetchCategoryCoreData(withTitle: title) ?? makeCategoryCoreData(title: title)
+        trackerCoreData.category = categoryCoreData
+        try context.save()
+    }
+
+    func deleteTracker(withId id: UUID) throws {
+        try trackerStore.deleteTracker(withId: id)
+    }
+
+    func setPinned(_ isPinned: Bool, forTrackerWithId id: UUID) throws {
+        try trackerStore.setPinned(isPinned, forTrackerWithId: id)
+    }
+
+    func deleteCategory(title: String) throws {
+        guard let coreData = try fetchCategoryCoreData(withTitle: title) else { return }
+        context.delete(coreData)
+        try context.save()
+    }
+
+    func updateCategory(oldTitle: String, newTitle: String) throws {
+        guard let coreData = try fetchCategoryCoreData(withTitle: oldTitle) else { return }
+        coreData.title = newTitle
+        try context.save()
+    }
+
     // MARK: - Mapping / helpers
 
     private func category(from coreData: TrackerCategoryCoreData) throws -> TrackerCategory {
