@@ -141,12 +141,7 @@ private extension OnboardingViewController {
 
 private extension OnboardingViewController {
     @objc func actionButtonTapped() {
-        let nextIndex = currentIndex + 1
-        if nextIndex < pages.count {
-            goToPage(at: nextIndex, direction: .forward)
-        } else {
-            onFinish?()
-        }
+        onFinish?()
     }
 
     @objc func pageControlValueChanged() {

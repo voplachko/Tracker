@@ -50,7 +50,7 @@ final class TrackerCell: UICollectionViewCell {
     private let pinImageView: UIImageView = {
         let imageView = UIImageView()
         let config = UIImage.SymbolConfiguration(pointSize: 12, weight: .semibold)
-        imageView.image = UIImage(systemName: "pin.fill", withConfiguration: config)
+        imageView.image = UIImage(sfSymbol: .pinFill, withConfiguration: config)
         imageView.tintColor = .white
         imageView.contentMode = .center
         imageView.isHidden = true
@@ -109,8 +109,8 @@ final class TrackerCell: UICollectionViewCell {
         toggleButton.tintColor = .white
 
         let symbolConfig = UIImage.SymbolConfiguration(pointSize: Dimen.x3, weight: .regular)
-        let symbolName = isCompleted ? "checkmark" : "plus"
-        let symbolImage = UIImage(systemName: symbolName, withConfiguration: symbolConfig)
+        let symbol: SFSymbol = isCompleted ? .checkmark : .plus
+        let symbolImage = UIImage(sfSymbol: symbol, withConfiguration: symbolConfig)
         toggleButton.setImage(symbolImage, for: .normal)
 
         toggleButton.isEnabled = !isFutureDate

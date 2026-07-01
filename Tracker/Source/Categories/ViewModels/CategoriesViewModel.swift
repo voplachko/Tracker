@@ -42,7 +42,7 @@ final class CategoriesViewModel {
         loadCategories()
     }
 
-    func numberOfCategories() -> Int {
+    var categoriesAmount: Int {
         categories.count
     }
 

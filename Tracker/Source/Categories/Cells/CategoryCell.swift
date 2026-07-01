@@ -20,7 +20,7 @@ final class CategoryCell: UITableViewCell {
     }()
 
     private let checkmarkImageView: UIImageView = {
-        let imageView = UIImageView(image: UIImage(systemName: "checkmark"))
+        let imageView = UIImageView(image: UIImage(sfSymbol: .checkmark))
         imageView.tintColor = .systemBlue
         imageView.contentMode = .scaleAspectFit
         imageView.isHidden = true

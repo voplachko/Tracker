@@ -105,7 +105,7 @@ private extension TrackersViewController {
         navigationItem.largeTitleDisplayMode = .always
 
         let addButton = UIBarButtonItem(
-            image: UIImage(systemName: "plus"),
+            image: UIImage(sfSymbol: .plus),
             style: .plain,
             target: self,
             action: #selector(addTrackerButtonTapped)
