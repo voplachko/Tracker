@@ -15,6 +15,15 @@ final class ColorPickerView: UIView {
         return UIColor.trackerColors[indexPath.item]
     }
 
+    func select(color: UIColor?) {
+        guard
+            let color,
+            let index = UIColor.trackerColors.firstIndex(where: { $0.hexString == color.hexString })
+        else { return }
+        selectedIndexPath = IndexPath(item: index, section: 0)
+        collectionView.reloadData()
+    }
+
     private var selectedIndexPath: IndexPath?
 
     private let titleLabel: UILabel = {

@@ -13,8 +13,9 @@ final class ScheduleViewController: UIViewController {
         static let doneButtonHeight: CGFloat = 60
     }
 
-    var selectedDays: Set<WeekDay>
     var onScheduleSelected: ((Set<WeekDay>) -> Void)?
+
+    private let viewModel: ScheduleViewModel
 
     private let tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .plain)
@@ -37,8 +38,8 @@ final class ScheduleViewController: UIViewController {
         return button
     }()
 
-    init(selectedDays: Set<WeekDay>) {
-        self.selectedDays = selectedDays
+    init(viewModel: ScheduleViewModel) {
+        self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -79,7 +80,7 @@ private extension ScheduleViewController {
             tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: Dimen.x6),
             tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: Dimen.x4),
             tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -Dimen.x4),
-            tableView.heightAnchor.constraint(equalToConstant: CGFloat(WeekDay.allCases.count) * Constants.rowHeight),
+            tableView.heightAnchor.constraint(equalToConstant: CGFloat(viewModel.numberOfDays()) * Constants.rowHeight),
 
             doneButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: Dimen.x5),
             doneButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -Dimen.x5),
@@ -93,23 +94,18 @@ private extension ScheduleViewController {
     }
 
     @objc func switchChanged(_ sender: UISwitch) {
-        let day = WeekDay.allCases[sender.tag]
-        if sender.isOn {
-            selectedDays.insert(day)
-        } else {
-            selectedDays.remove(day)
-        }
+        viewModel.setDay(at: sender.tag, isSelected: sender.isOn)
     }
 
     @objc func doneTapped() {
-        onScheduleSelected?(selectedDays)
+        onScheduleSelected?(viewModel.selectedDays)
         navigationController?.popViewController(animated: true)
     }
 }
 
 extension ScheduleViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        WeekDay.allCases.count
+        viewModel.numberOfDays()
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -120,20 +116,18 @@ extension ScheduleViewController: UITableViewDataSource {
             return UITableViewCell()
         }
 
-        let day = WeekDay.allCases[indexPath.row]
-
         let daySwitch = UISwitch()
         daySwitch.tag = indexPath.row
-        daySwitch.isOn = selectedDays.contains(day)
+        daySwitch.isOn = viewModel.isDaySelected(at: indexPath.row)
         daySwitch.addTarget(self, action: #selector(switchChanged), for: .valueChanged)
 
-        cell.textLabel?.text = day.title
+        cell.textLabel?.text = viewModel.dayTitle(at: indexPath.row)
         cell.textLabel?.font = .ypRegular17
         cell.backgroundColor = .ypBackgroundDay
         cell.selectionStyle = .none
         cell.accessoryView = daySwitch
 
-        let isLastCell = indexPath.row == WeekDay.allCases.count - 1
+        let isLastCell = indexPath.row == viewModel.numberOfDays() - 1
         cell.separatorView.isHidden = isLastCell
 
         return cell

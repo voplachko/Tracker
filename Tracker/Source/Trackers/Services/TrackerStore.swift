@@ -53,17 +53,28 @@ final class TrackerStore: NSObject {
         try context.save()
     }
 
+    func setPinned(_ isPinned: Bool, forTrackerWithId id: UUID) throws {
+        guard let object = try fetchTrackerCoreData(withId: id) else { return }
+        object.isPinned = isPinned
+        try context.save()
+    }
+
     // MARK: - Store-layer helpers
 
     @discardableResult
     func makeTrackerCoreData(from tracker: Tracker) -> TrackerCoreData {
         let coreData = TrackerCoreData(context: context)
         coreData.id = tracker.id
+        apply(tracker, to: coreData)
+        return coreData
+    }
+
+    func apply(_ tracker: Tracker, to coreData: TrackerCoreData) {
         coreData.title = tracker.title
         coreData.emoji = tracker.emoji
         coreData.colorHex = tracker.color.hexString
         coreData.schedule = WeekDay.encode(tracker.schedule)
-        return coreData
+        coreData.isPinned = tracker.isPinned
     }
 
     func tracker(from coreData: TrackerCoreData) throws -> Tracker {
@@ -82,7 +93,8 @@ final class TrackerStore: NSObject {
             title: title,
             color: color,
             emoji: emoji,
-            schedule: WeekDay.decode(coreData.schedule ?? "")
+            schedule: WeekDay.decode(coreData.schedule ?? ""),
+            isPinned: coreData.isPinned
         )
     }
 
