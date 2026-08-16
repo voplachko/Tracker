@@ -7,19 +7,14 @@
 
 import UIKit
 
-enum TrackerKind {
-    case habit
-    case irregularEvent
-}
-
 enum CreationRow: Equatable {
     case category
     case schedule
 
     var title: String {
         switch self {
-        case .category: return "Категория"
-        case .schedule: return "Расписание"
+        case .category: return L10n.TrackerCreation.category
+        case .schedule: return L10n.TrackerCreation.schedule
         }
     }
 }
@@ -56,20 +51,25 @@ final class TrackerCreationViewModel {
     }
 
     private let editingTracker: Tracker?
+    /// Дата, выбранная в календаре на главном экране: на неё назначается нерегулярное событие.
+    private let selectedDate: Date
     let daysCount: Int?
 
     var isEditing: Bool { editingTracker != nil }
 
     // MARK: - Init
 
-    init(kind: TrackerKind) {
+    init(kind: TrackerKind, selectedDate: Date) {
         self.kind = kind
+        self.selectedDate = selectedDate
         self.editingTracker = nil
         self.daysCount = nil
     }
 
     init(editing tracker: Tracker, categoryTitle: String, daysCount: Int) {
-        self.kind = .habit
+        // При редактировании тип трекера сохраняется
+        self.kind = tracker.kind
+        self.selectedDate = tracker.eventDate ?? Date()
         self.editingTracker = tracker
         self.daysCount = daysCount
         self.title = tracker.title
@@ -82,17 +82,21 @@ final class TrackerCreationViewModel {
     // MARK: - Derived data for View
 
     var screenTitle: String {
-        if isEditing { return "Редактирование привычки" }
-        return kind == .habit ? "Новая привычка" : "Новое нерегулярное событие"
+        switch (isEditing, kind) {
+        case (true, .habit): return L10n.TrackerCreation.editHabit
+        case (true, .irregularEvent): return L10n.TrackerCreation.editIrregularEvent
+        case (false, .habit): return L10n.TrackerCreation.newHabit
+        case (false, .irregularEvent): return L10n.TrackerCreation.newIrregularEvent
+        }
     }
 
     var actionButtonTitle: String {
-        isEditing ? "Сохранить" : "Создать"
+        isEditing ? L10n.Common.save : L10n.Common.create
     }
 
     var daysCountText: String? {
         guard let daysCount else { return nil }
-        return "\(daysCount) \(Self.daysString(for: daysCount))"
+        return L10n.daysCount(daysCount)
     }
 
     var rows: [CreationRow] {
@@ -108,7 +112,7 @@ final class TrackerCreationViewModel {
 
     var scheduleSubtitle: String? {
         guard !selectedSchedule.isEmpty else { return nil }
-        if selectedSchedule.count == WeekDay.allCases.count { return "Каждый день" }
+        if selectedSchedule.count == WeekDay.allCases.count { return L10n.TrackerCreation.everyDay }
         return WeekDay.allCases
             .filter { selectedSchedule.contains($0) }
             .map { $0.shortTitle }
@@ -146,6 +150,7 @@ final class TrackerCreationViewModel {
         let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard
             !trimmedTitle.isEmpty,
+            trimmedTitle.count <= titleCharacterLimit,
             let emoji = selectedEmoji,
             let color = selectedColor,
             let categoryTitle = selectedCategoryTitle
@@ -154,12 +159,17 @@ final class TrackerCreationViewModel {
         }
 
         let schedule: Set<WeekDay>
+        let eventDate: Date?
+
         switch kind {
         case .habit:
             guard !selectedSchedule.isEmpty else { return nil }
             schedule = selectedSchedule
+            eventDate = nil
         case .irregularEvent:
-            schedule = Set(WeekDay.allCases)
+            // Событие привязано к дате создания, а не к дням недели
+            schedule = []
+            eventDate = editingTracker?.eventDate ?? selectedDate
         }
 
         let tracker = Tracker(
@@ -168,6 +178,7 @@ final class TrackerCreationViewModel {
             color: color,
             emoji: emoji,
             schedule: schedule,
+            eventDate: eventDate,
             isPinned: editingTracker?.isPinned ?? false
         )
         return (tracker, categoryTitle)
@@ -198,20 +209,5 @@ final class TrackerCreationViewModel {
         onScheduleChanged?(scheduleSubtitle)
         onLimitWarningChanged?(isTitleTooLong)
         onCreateEnabledChanged?(isCreateEnabled)
-    }
-
-    private static func daysString(for count: Int) -> String {
-        let lastTwoDigits = count % 100
-        let lastDigit = count % 10
-
-        if (11...14).contains(lastTwoDigits) {
-            return "дней"
-        }
-
-        switch lastDigit {
-        case 1: return "день"
-        case 2...4: return "дня"
-        default: return "дней"
-        }
     }
 }

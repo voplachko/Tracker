@@ -35,8 +35,8 @@ final class NewCategoryViewModel {
 
     var screenTitle: String {
         switch mode {
-        case .create: "Новая категория"
-        case .edit: "Редактирование категории"
+        case .create: L10n.Categories.new
+        case .edit: L10n.Categories.edit
         }
     }
 

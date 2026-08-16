@@ -40,15 +40,20 @@ final class TabBarController: UITabBarController {
                 categoryStore: categoryStore,
                 recordStore: recordStore
             ),
-            title: "Трекеры",
+            title: L10n.TabBar.trackers,
             image: UIImage(resource: .icTabBarTrackers)
         )
     }
 
     private func makeStatsTab() -> UIViewController {
-        makeTab(
-            rootViewController: StatisticsViewController(),
-            title: "Статистика",
+        let statisticsViewModel = StatisticsViewModel(
+            categoryStore: categoryStore,
+            recordStore: recordStore
+        )
+
+        return makeTab(
+            rootViewController: StatisticsViewController(viewModel: statisticsViewModel),
+            title: L10n.TabBar.statistics,
             image: UIImage(resource: .icTabBarStats)
         )
     }

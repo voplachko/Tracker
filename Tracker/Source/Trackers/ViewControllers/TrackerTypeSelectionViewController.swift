@@ -35,7 +35,7 @@ final class TrackerTypeSelectionViewController: UIViewController {
 
 private extension TrackerTypeSelectionViewController {
     func setupView() {
-        title = "Создание трекера"
+        title = L10n.TrackerType.title
         view.backgroundColor = .systemBackground
     }
 

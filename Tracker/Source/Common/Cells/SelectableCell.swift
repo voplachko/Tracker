@@ -1,27 +1,59 @@
 //
-//  CategoryCell.swift
+//  SelectableCell.swift
 //  Tracker
 //
-//  Created by Vsevolod Oplachko on 24.06.2026.
+//  Created by Vsevolod Oplachko on 05.08.2026.
 //
 
 import UIKit
 
-final class CategoryCell: UITableViewCell {
+/// Строка списка с заголовком и синей галочкой у выбранного элемента.
+final class SelectableCell: UITableViewCell {
 
-    static let reuseIdentifier = "CategoryCell"
+    /// Положение строки в списке: от него зависят скругления и разделитель.
+    enum Position {
+        case single
+        case first
+        case middle
+        case last
+
+        init(row: Int, totalRows: Int) {
+            switch (row, totalRows) {
+            case (_, 1): self = .single
+            case (0, _): self = .first
+            case (totalRows - 1, _): self = .last
+            default: self = .middle
+            }
+        }
+
+        var maskedCorners: CACornerMask {
+            switch self {
+            case .single: return [.layerMinXMinYCorner, .layerMaxXMinYCorner,
+                                  .layerMinXMaxYCorner, .layerMaxXMaxYCorner]
+            case .first: return [.layerMinXMinYCorner, .layerMaxXMinYCorner]
+            case .last: return [.layerMinXMaxYCorner, .layerMaxXMaxYCorner]
+            case .middle: return []
+            }
+        }
+
+        var isSeparatorHidden: Bool {
+            self == .single || self == .last
+        }
+    }
+
+    static let reuseIdentifier = "SelectableCell"
 
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.font = .ypRegular17
-        label.textColor = .ypBlackDay
+        label.textColor = .ypBlack
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
 
     private let checkmarkImageView: UIImageView = {
         let imageView = UIImageView(image: UIImage(sfSymbol: .checkmark))
-        imageView.tintColor = .systemBlue
+        imageView.tintColor = .ypBlue
         imageView.contentMode = .scaleAspectFit
         imageView.isHidden = true
         imageView.translatesAutoresizingMaskIntoConstraints = false
@@ -37,7 +69,7 @@ final class CategoryCell: UITableViewCell {
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        backgroundColor = .ypBackgroundDay
+        backgroundColor = .ypBackground
         selectionStyle = .none
         setupConstraints()
     }
@@ -47,13 +79,17 @@ final class CategoryCell: UITableViewCell {
         nil
     }
 
-    func configure(with viewModel: CategoryCellViewModel) {
+    func configure(with viewModel: SelectableCellViewModel, position: Position) {
         titleLabel.text = viewModel.title
         checkmarkImageView.isHidden = !viewModel.isSelected
-    }
 
-    func setSeparatorHidden(_ isHidden: Bool) {
-        separatorView.isHidden = isHidden
+        // Углы скругляются на уровне ячейки: таблица занимает всю доступную
+        // высоту, поэтому её собственные границы не совпадают с границами списка.
+        layer.cornerRadius = position.maskedCorners.isEmpty ? 0 : Dimen.x4
+        layer.maskedCorners = position.maskedCorners
+        layer.masksToBounds = true
+
+        separatorView.isHidden = position.isSeparatorHidden
     }
 
     private func setupConstraints() {

@@ -103,7 +103,7 @@ final class TrackerCell: UICollectionViewCell {
         emojiLabel.text = tracker.emoji
         titleLabel.text = tracker.title
         pinImageView.isHidden = !tracker.isPinned
-        counterLabel.text = "\(count) \(Self.daysString(for: count))"
+        counterLabel.text = L10n.daysCount(count)
 
         toggleButton.backgroundColor = tracker.color
         toggleButton.tintColor = .white
@@ -179,23 +179,5 @@ private extension TrackerCell {
 
     @objc func toggleTapped() {
         onToggle?()
-    }
-
-    static func daysString(for count: Int) -> String {
-        let lastTwoDigits = count % 100
-        let lastDigit = count % 10
-
-        if (11...14).contains(lastTwoDigits) {
-            return "дней"
-        }
-
-        switch lastDigit {
-        case 1:
-            return "день"
-        case 2...4:
-            return "дня"
-        default:
-            return "дней"
-        }
     }
 }

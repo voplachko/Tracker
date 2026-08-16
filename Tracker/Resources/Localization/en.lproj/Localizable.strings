@@ -1,0 +1,106 @@
+/*
+  Localizable.strings
+  Tracker
+
+  English (machine translation)
+*/
+
+// MARK: - Common
+
+"common.cancel" = "Cancel";
+"common.create" = "Create";
+"common.save" = "Save";
+"common.done" = "Done";
+"common.delete" = "Delete";
+"common.edit" = "Edit";
+
+// MARK: - Tab bar
+
+"tabBar.trackers" = "Trackers";
+"tabBar.statistics" = "Statistics";
+
+// MARK: - Trackers
+
+"trackers.title" = "Trackers";
+"trackers.placeholder" = "What are we going to track?";
+"trackers.searchPlaceholder" = "Search";
+"trackers.nothingFound" = "Nothing found";
+"trackers.pinnedSection" = "Pinned";
+"trackers.pin" = "Pin";
+"trackers.unpin" = "Unpin";
+"trackers.deleteConfirmation" = "Are you sure you want to delete the tracker?";
+
+// MARK: - Filters
+
+"filters.title" = "Filters";
+"filters.all" = "All trackers";
+"filters.today" = "Trackers for today";
+"filters.completed" = "Completed";
+"filters.uncompleted" = "Uncompleted";
+
+// MARK: - Statistics
+
+"statistics.title" = "Statistics";
+"statistics.placeholder" = "There is nothing to analyze yet";
+"statistics.bestPeriod" = "Best period";
+"statistics.perfectDays" = "Perfect days";
+"statistics.completedTrackers" = "Trackers completed";
+"statistics.average" = "Average value";
+
+// MARK: - Tracker type selection
+
+"trackerType.title" = "Creating a tracker";
+"trackerType.habit" = "Habit";
+"trackerType.irregularEvent" = "Irregular event";
+
+// MARK: - Tracker creation
+
+"trackerCreation.newHabit" = "New habit";
+"trackerCreation.newIrregularEvent" = "New irregular event";
+"trackerCreation.editHabit" = "Editing a habit";
+"trackerCreation.editIrregularEvent" = "Editing an event";
+"trackerCreation.titlePlaceholder" = "Enter the tracker name";
+"trackerCreation.characterLimit" = "Limit of %d characters";
+"trackerCreation.category" = "Category";
+"trackerCreation.schedule" = "Schedule";
+"trackerCreation.everyDay" = "Every day";
+"trackerCreation.emoji" = "Emoji";
+"trackerCreation.color" = "Color";
+
+// MARK: - Categories
+
+"categories.title" = "Category";
+"categories.placeholder" = "Habits and events can be\ncombined by meaning";
+"categories.addButton" = "Add category";
+"categories.deleteConfirmation" = "Is this category really not needed?";
+"categories.new" = "New category";
+"categories.edit" = "Editing a category";
+"categories.titlePlaceholder" = "Enter the category name";
+
+// MARK: - Schedule
+
+"schedule.title" = "Schedule";
+
+// MARK: - Week days
+
+"weekDay.monday" = "Monday";
+"weekDay.tuesday" = "Tuesday";
+"weekDay.wednesday" = "Wednesday";
+"weekDay.thursday" = "Thursday";
+"weekDay.friday" = "Friday";
+"weekDay.saturday" = "Saturday";
+"weekDay.sunday" = "Sunday";
+
+"weekDay.short.monday" = "Mon";
+"weekDay.short.tuesday" = "Tue";
+"weekDay.short.wednesday" = "Wed";
+"weekDay.short.thursday" = "Thu";
+"weekDay.short.friday" = "Fri";
+"weekDay.short.saturday" = "Sat";
+"weekDay.short.sunday" = "Sun";
+
+// MARK: - Onboarding
+
+"onboarding.firstPage.title" = "Track only what you want";
+"onboarding.secondPage.title" = "Even if it's not liters of water and yoga";
+"onboarding.button" = "What a technology!";

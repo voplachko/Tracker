@@ -29,10 +29,10 @@ final class ScheduleViewController: UIViewController {
 
     private let doneButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("Готово", for: .normal)
-        button.setTitleColor(.white, for: .normal)
+        button.setTitle(L10n.Common.done, for: .normal)
+        button.setTitleColor(.ypWhite, for: .normal)
         button.titleLabel?.font = .ypMedium16
-        button.backgroundColor = .ypBlackDay
+        button.backgroundColor = .ypBlack
         button.layer.cornerRadius = Dimen.x4
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
@@ -59,7 +59,7 @@ final class ScheduleViewController: UIViewController {
 
 private extension ScheduleViewController {
     func setupView() {
-        title = "Расписание"
+        title = L10n.Schedule.title
         view.backgroundColor = .systemBackground
     }
 
@@ -123,7 +123,7 @@ extension ScheduleViewController: UITableViewDataSource {
 
         cell.textLabel?.text = viewModel.dayTitle(at: indexPath.row)
         cell.textLabel?.font = .ypRegular17
-        cell.backgroundColor = .ypBackgroundDay
+        cell.backgroundColor = .ypBackground
         cell.selectionStyle = .none
         cell.accessoryView = daySwitch
 

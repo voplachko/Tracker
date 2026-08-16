@@ -40,9 +40,9 @@ final class TrackerCreationViewController: UIViewController {
 
     private let titleTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "Введите название трекера"
+        textField.placeholder = L10n.TrackerCreation.titlePlaceholder
         textField.font = .ypRegular17
-        textField.backgroundColor = .ypBackgroundDay
+        textField.backgroundColor = .ypBackground
         textField.tintColor = .ypGray
         textField.layer.cornerRadius = Dimen.x4
         textField.clearButtonMode = .whileEditing
@@ -55,7 +55,7 @@ final class TrackerCreationViewController: UIViewController {
 
     private lazy var limitLabel: UILabel = {
         let label = UILabel()
-        label.text = "Ограничение \(viewModel.titleCharacterLimit) символов"
+        label.text = L10n.TrackerCreation.characterLimit(viewModel.titleCharacterLimit)
         label.textColor = .ypRed
         label.font = .ypRegular17
         label.textAlignment = .center
@@ -78,7 +78,7 @@ final class TrackerCreationViewController: UIViewController {
     private lazy var daysCounterLabel: UILabel = {
         let label = UILabel()
         label.font = .ypBold32
-        label.textColor = .ypBlackDay
+        label.textColor = .ypBlack
         label.textAlignment = .center
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -89,7 +89,7 @@ final class TrackerCreationViewController: UIViewController {
 
     private let cancelButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("Отменить", for: .normal)
+        button.setTitle(L10n.Common.cancel, for: .normal)
         button.setTitleColor(.ypRed, for: .normal)
         button.titleLabel?.font = .ypMedium16
         button.layer.cornerRadius = Dimen.x4
@@ -102,8 +102,8 @@ final class TrackerCreationViewController: UIViewController {
     private let createButton: UIButton = {
         let button = UIButton(type: .system)
         button.backgroundColor = .ypGray
-        button.setTitle("Создать", for: .normal)
-        button.setTitleColor(.white, for: .normal)
+        button.setTitle(L10n.Common.create, for: .normal)
+        button.setTitleColor(.ypWhite, for: .normal)
         button.titleLabel?.font = .ypMedium16
         button.layer.cornerRadius = Dimen.x4
         button.isEnabled = false
@@ -120,8 +120,8 @@ final class TrackerCreationViewController: UIViewController {
         return stackView
     }()
 
-    init(kind: TrackerKind) {
-        self.viewModel = TrackerCreationViewModel(kind: kind)
+    init(kind: TrackerKind, selectedDate: Date) {
+        self.viewModel = TrackerCreationViewModel(kind: kind, selectedDate: selectedDate)
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -288,7 +288,7 @@ private extension TrackerCreationViewController {
     func bindViewModel() {
         viewModel.onCreateEnabledChanged = { [weak self] isEnabled in
             self?.createButton.isEnabled = isEnabled
-            self?.createButton.backgroundColor = isEnabled ? .ypBlackDay : .ypGray
+            self?.createButton.backgroundColor = isEnabled ? .ypBlack : .ypGray
         }
 
         viewModel.onCategoryChanged = { [weak self] _ in
@@ -394,18 +394,10 @@ private extension TrackerCreationViewController {
 
 // MARK: - UITextFieldDelegate
 
+/// Длина названия не ограничивается на уровне ввода: при превышении лимита
+/// показывается предупреждение «Ограничение 38 символов», а кнопка сохранения
+/// становится неактивной.
 extension TrackerCreationViewController: UITextFieldDelegate {
-    func textField(
-        _ textField: UITextField,
-        shouldChangeCharactersIn range: NSRange,
-        replacementString string: String
-    ) -> Bool {
-        let currentText = textField.text ?? ""
-        guard let textRange = Range(range, in: currentText) else { return false }
-        let updatedText = currentText.replacingCharacters(in: textRange, with: string)
-        return updatedText.count <= viewModel.titleCharacterLimit
-    }
-
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
         return true
@@ -436,7 +428,7 @@ extension TrackerCreationViewController: UITableViewDataSource {
         content.secondaryTextProperties.color = .ypGray
 
         cell.contentConfiguration = content
-        cell.backgroundColor = .ypBackgroundDay
+        cell.backgroundColor = .ypBackground
         cell.accessoryType = .disclosureIndicator
         cell.selectionStyle = .none
 
