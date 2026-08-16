@@ -27,11 +27,11 @@ final class OnboardingViewController: UIViewController {
     private lazy var pages: [UIViewController] = [
         OnboardingPageViewController(
             backgroundImage: UIImage(resource: .imgOnboardingFirstScreen),
-            title: "Отслеживайте только то, что хотите"
+            title: L10n.Onboarding.FirstPage.title
         ),
         OnboardingPageViewController(
             backgroundImage: UIImage(resource: .imgOnboardingSecondScreen),
-            title: "Даже если это  не литры воды и йога"
+            title: L10n.Onboarding.SecondPage.title
         )
     ]
 
@@ -59,7 +59,7 @@ final class OnboardingViewController: UIViewController {
     }()
 
     private lazy var actionButton: PrimaryButton = {
-        let button = PrimaryButton(title: "Вот это технологии!")
+        let button = PrimaryButton(title: L10n.Onboarding.button)
         button.addTarget(self, action: #selector(actionButtonTapped), for: .touchUpInside)
         return button
     }()

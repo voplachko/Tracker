@@ -28,9 +28,9 @@ final class ColorPickerView: UIView {
 
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "Цвет"
+        label.text = L10n.TrackerCreation.color
         label.font = .ypBold19
-        label.textColor = .ypBlackDay
+        label.textColor = .ypBlack
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()

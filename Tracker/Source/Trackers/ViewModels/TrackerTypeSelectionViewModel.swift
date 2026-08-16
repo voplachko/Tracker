@@ -11,8 +11,8 @@ final class TrackerTypeSelectionViewModel {
 
     var onTypeSelected: Binding<TrackerKind>?
 
-    let habitTitle = "Привычка"
-    let irregularEventTitle = "Нерегулярное событие"
+    let habitTitle = L10n.TrackerType.habit
+    let irregularEventTitle = L10n.TrackerType.irregularEvent
 
     func selectHabit() {
         onTypeSelected?(.habit)

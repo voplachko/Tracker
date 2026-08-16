@@ -11,7 +11,7 @@ final class CategoriesViewModel {
 
     // MARK: - Bindings
 
-    var onCategoriesChanged: Binding<[CategoryCellViewModel]>?
+    var onCategoriesChanged: Binding<[SelectableCellViewModel]>?
     var onPlaceholderVisibilityChanged: Binding<Bool>?
     var onCategorySelected: Binding<String>?
 
@@ -46,9 +46,9 @@ final class CategoriesViewModel {
         categories.count
     }
 
-    func cellViewModel(at index: Int) -> CategoryCellViewModel {
+    func cellViewModel(at index: Int) -> SelectableCellViewModel {
         let category = categories[index]
-        return CategoryCellViewModel(
+        return SelectableCellViewModel(
             title: category.title,
             isSelected: category.title == selectedCategoryTitle
         )
@@ -90,9 +90,9 @@ final class CategoriesViewModel {
         categories = (try? categoryStore.categories()) ?? []
     }
 
-    private func makeCellViewModels() -> [CategoryCellViewModel] {
+    private func makeCellViewModels() -> [SelectableCellViewModel] {
         categories.map {
-            CategoryCellViewModel(
+            SelectableCellViewModel(
                 title: $0.title,
                 isSelected: $0.title == selectedCategoryTitle
             )

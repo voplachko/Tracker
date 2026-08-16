@@ -25,25 +25,25 @@ extension WeekDay {
 extension WeekDay {
     var title: String {
         switch self {
-        case .monday: return "Понедельник"
-        case .tuesday: return "Вторник"
-        case .wednesday: return "Среда"
-        case .thursday: return "Четверг"
-        case .friday: return "Пятница"
-        case .saturday: return "Суббота"
-        case .sunday: return "Воскресенье"
+        case .monday: return L10n.WeekDay.monday
+        case .tuesday: return L10n.WeekDay.tuesday
+        case .wednesday: return L10n.WeekDay.wednesday
+        case .thursday: return L10n.WeekDay.thursday
+        case .friday: return L10n.WeekDay.friday
+        case .saturday: return L10n.WeekDay.saturday
+        case .sunday: return L10n.WeekDay.sunday
         }
     }
 
     var shortTitle: String {
         switch self {
-        case .monday: return "Пн"
-        case .tuesday: return "Вт"
-        case .wednesday: return "Ср"
-        case .thursday: return "Чт"
-        case .friday: return "Пт"
-        case .saturday: return "Сб"
-        case .sunday: return "Вс"
+        case .monday: return L10n.WeekDay.Short.monday
+        case .tuesday: return L10n.WeekDay.Short.tuesday
+        case .wednesday: return L10n.WeekDay.Short.wednesday
+        case .thursday: return L10n.WeekDay.Short.thursday
+        case .friday: return L10n.WeekDay.Short.friday
+        case .saturday: return L10n.WeekDay.Short.saturday
+        case .sunday: return L10n.WeekDay.Short.sunday
         }
     }
 }

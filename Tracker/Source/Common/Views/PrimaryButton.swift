@@ -11,9 +11,9 @@ final class PrimaryButton: UIButton {
     init(title: String) {
         super.init(frame: .zero)
         setTitle(title, for: .normal)
-        setTitleColor(.white, for: .normal)
+        setTitleColor(.ypWhite, for: .normal)
         titleLabel?.font = .ypMedium16
-        backgroundColor = .ypBlackDay
+        backgroundColor = .ypBlack
         layer.cornerRadius = Dimen.x4
         translatesAutoresizingMaskIntoConstraints = false
     }

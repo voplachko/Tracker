@@ -17,13 +17,12 @@ final class CategoriesViewController: UIViewController {
     var onCategorySelect: ((String) -> Void)?
 
     private let viewModel: CategoriesViewModel
-    private var cellViewModels: [CategoryCellViewModel] = []
+    private var cellViewModels: [SelectableCellViewModel] = []
 
     private let tableView: UITableView = {
         let tableView = UITableView(frame: .zero, style: .plain)
         tableView.separatorStyle = .none
-        tableView.layer.cornerRadius = Dimen.x4
-        tableView.layer.masksToBounds = true
+        tableView.backgroundColor = .clear
         tableView.translatesAutoresizingMaskIntoConstraints = false
         return tableView
     }()
@@ -37,9 +36,9 @@ final class CategoriesViewController: UIViewController {
 
     private let placeholderLabel: UILabel = {
         let label = UILabel()
-        label.text = "Привычки и события можно\nобъединить по смыслу"
+        label.text = L10n.Categories.placeholder
         label.font = .ypMedium12
-        label.textColor = .ypBlackDay
+        label.textColor = .ypBlack
         label.textAlignment = .center
         label.numberOfLines = 0
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -56,7 +55,7 @@ final class CategoriesViewController: UIViewController {
     }()
 
     private lazy var addButton: PrimaryButton = {
-        let button = PrimaryButton(title: "Добавить категорию")
+        let button = PrimaryButton(title: L10n.Categories.addButton)
         button.addTarget(self, action: #selector(addCategoryTapped), for: .touchUpInside)
         return button
     }()
@@ -85,14 +84,14 @@ final class CategoriesViewController: UIViewController {
 
 private extension CategoriesViewController {
     func setupView() {
-        title = "Категория"
+        title = L10n.Categories.title
         view.backgroundColor = .systemBackground
     }
 
     func setupTableView() {
         tableView.dataSource = self
         tableView.delegate = self
-        tableView.register(CategoryCell.self, forCellReuseIdentifier: CategoryCell.reuseIdentifier)
+        tableView.register(SelectableCell.self, forCellReuseIdentifier: SelectableCell.reuseIdentifier)
     }
 
     func setupConstraints() {
@@ -155,15 +154,16 @@ extension CategoriesViewController: UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(
-            withIdentifier: CategoryCell.reuseIdentifier,
+            withIdentifier: SelectableCell.reuseIdentifier,
             for: indexPath
-        ) as? CategoryCell else {
+        ) as? SelectableCell else {
             return UITableViewCell()
         }
 
-        cell.configure(with: cellViewModels[indexPath.row])
-        let isLastCell = indexPath.row == cellViewModels.count - 1
-        cell.setSeparatorHidden(isLastCell)
+        cell.configure(
+            with: cellViewModels[indexPath.row],
+            position: SelectableCell.Position(row: indexPath.row, totalRows: cellViewModels.count)
+        )
         return cell
     }
 }
@@ -186,10 +186,10 @@ extension CategoriesViewController: UITableViewDelegate {
         point: CGPoint
     ) -> UIContextMenuConfiguration? {
         UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { [weak self] _ in
-            let editAction = UIAction(title: "Редактировать") { [weak self] _ in
+            let editAction = UIAction(title: L10n.Common.edit) { [weak self] _ in
                 self?.editCategory(at: indexPath)
             }
-            let deleteAction = UIAction(title: "Удалить", attributes: .destructive) { [weak self] _ in
+            let deleteAction = UIAction(title: L10n.Common.delete, attributes: .destructive) { [weak self] _ in
                 self?.confirmDeleteCategory(at: indexPath)
             }
             return UIMenu(children: [editAction, deleteAction])
@@ -214,13 +214,13 @@ private extension CategoriesViewController {
     func confirmDeleteCategory(at indexPath: IndexPath) {
         let alert = UIAlertController(
             title: nil,
-            message: "Эта категория точно не нужна?",
+            message: L10n.Categories.deleteConfirmation,
             preferredStyle: .actionSheet
         )
-        alert.addAction(UIAlertAction(title: "Удалить", style: .destructive) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: L10n.Common.delete, style: .destructive) { [weak self] _ in
             self?.viewModel.deleteCategory(at: indexPath.row)
         })
-        alert.addAction(UIAlertAction(title: "Отменить", style: .cancel))
+        alert.addAction(UIAlertAction(title: L10n.Common.cancel, style: .cancel))
 
         if let popover = alert.popoverPresentationController,
            let cell = tableView.cellForRow(at: indexPath) {

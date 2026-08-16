@@ -1,0 +1,106 @@
+/*
+  Localizable.strings
+  Tracker
+
+  Español (traducción automática)
+*/
+
+// MARK: - Common
+
+"common.cancel" = "Cancelar";
+"common.create" = "Crear";
+"common.save" = "Guardar";
+"common.done" = "Listo";
+"common.delete" = "Eliminar";
+"common.edit" = "Editar";
+
+// MARK: - Tab bar
+
+"tabBar.trackers" = "Rastreadores";
+"tabBar.statistics" = "Estadísticas";
+
+// MARK: - Trackers
+
+"trackers.title" = "Rastreadores";
+"trackers.placeholder" = "¿Qué vamos a rastrear?";
+"trackers.searchPlaceholder" = "Buscar";
+"trackers.nothingFound" = "No se encontró nada";
+"trackers.pinnedSection" = "Fijados";
+"trackers.pin" = "Fijar";
+"trackers.unpin" = "Desfijar";
+"trackers.deleteConfirmation" = "¿Seguro que quieres eliminar el rastreador?";
+
+// MARK: - Filters
+
+"filters.title" = "Filtros";
+"filters.all" = "Todos los rastreadores";
+"filters.today" = "Rastreadores para hoy";
+"filters.completed" = "Completados";
+"filters.uncompleted" = "No completados";
+
+// MARK: - Statistics
+
+"statistics.title" = "Estadísticas";
+"statistics.placeholder" = "Todavía no hay nada que analizar";
+"statistics.bestPeriod" = "Mejor periodo";
+"statistics.perfectDays" = "Días perfectos";
+"statistics.completedTrackers" = "Rastreadores completados";
+"statistics.average" = "Valor medio";
+
+// MARK: - Tracker type selection
+
+"trackerType.title" = "Creación de un rastreador";
+"trackerType.habit" = "Hábito";
+"trackerType.irregularEvent" = "Evento irregular";
+
+// MARK: - Tracker creation
+
+"trackerCreation.newHabit" = "Nuevo hábito";
+"trackerCreation.newIrregularEvent" = "Nuevo evento irregular";
+"trackerCreation.editHabit" = "Edición del hábito";
+"trackerCreation.editIrregularEvent" = "Edición del evento";
+"trackerCreation.titlePlaceholder" = "Introduce el nombre del rastreador";
+"trackerCreation.characterLimit" = "Límite de %d caracteres";
+"trackerCreation.category" = "Categoría";
+"trackerCreation.schedule" = "Horario";
+"trackerCreation.everyDay" = "Todos los días";
+"trackerCreation.emoji" = "Emoji";
+"trackerCreation.color" = "Color";
+
+// MARK: - Categories
+
+"categories.title" = "Categoría";
+"categories.placeholder" = "Los hábitos y eventos se pueden\nagrupar por su sentido";
+"categories.addButton" = "Añadir categoría";
+"categories.deleteConfirmation" = "¿Seguro que no necesitas esta categoría?";
+"categories.new" = "Nueva categoría";
+"categories.edit" = "Edición de la categoría";
+"categories.titlePlaceholder" = "Introduce el nombre de la categoría";
+
+// MARK: - Schedule
+
+"schedule.title" = "Horario";
+
+// MARK: - Week days
+
+"weekDay.monday" = "Lunes";
+"weekDay.tuesday" = "Martes";
+"weekDay.wednesday" = "Miércoles";
+"weekDay.thursday" = "Jueves";
+"weekDay.friday" = "Viernes";
+"weekDay.saturday" = "Sábado";
+"weekDay.sunday" = "Domingo";
+
+"weekDay.short.monday" = "Lun";
+"weekDay.short.tuesday" = "Mar";
+"weekDay.short.wednesday" = "Mié";
+"weekDay.short.thursday" = "Jue";
+"weekDay.short.friday" = "Vie";
+"weekDay.short.saturday" = "Sáb";
+"weekDay.short.sunday" = "Dom";
+
+// MARK: - Onboarding
+
+"onboarding.firstPage.title" = "Rastrea solo lo que quieras";
+"onboarding.secondPage.title" = "Aunque no sean litros de agua ni yoga";
+"onboarding.button" = "¡Vaya tecnología!";

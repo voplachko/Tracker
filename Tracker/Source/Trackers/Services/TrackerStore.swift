@@ -74,6 +74,7 @@ final class TrackerStore: NSObject {
         coreData.emoji = tracker.emoji
         coreData.colorHex = tracker.color.hexString
         coreData.schedule = WeekDay.encode(tracker.schedule)
+        coreData.eventDate = tracker.eventDate
         coreData.isPinned = tracker.isPinned
     }
 
@@ -94,6 +95,7 @@ final class TrackerStore: NSObject {
             color: color,
             emoji: emoji,
             schedule: WeekDay.decode(coreData.schedule ?? ""),
+            eventDate: coreData.eventDate,
             isPinned: coreData.isPinned
         )
     }

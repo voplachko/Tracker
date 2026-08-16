@@ -18,9 +18,9 @@ final class NewCategoryViewController: UIViewController {
 
     private let titleTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = "Введите название категории"
+        textField.placeholder = L10n.Categories.titlePlaceholder
         textField.font = .ypRegular17
-        textField.backgroundColor = .ypBackgroundDay
+        textField.backgroundColor = .ypBackground
         textField.tintColor = .ypGray
         textField.layer.cornerRadius = Dimen.x4
         textField.clearButtonMode = .whileEditing
@@ -33,8 +33,8 @@ final class NewCategoryViewController: UIViewController {
 
     private let doneButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setTitle("Готово", for: .normal)
-        button.setTitleColor(.white, for: .normal)
+        button.setTitle(L10n.Common.done, for: .normal)
+        button.setTitleColor(.ypWhite, for: .normal)
         button.titleLabel?.font = .ypMedium16
         button.layer.cornerRadius = Dimen.x4
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -101,7 +101,7 @@ private extension NewCategoryViewController {
 
     func setReadyState(_ isReady: Bool) {
         doneButton.isEnabled = isReady
-        doneButton.backgroundColor = isReady ? .ypBlackDay : .ypGray
+        doneButton.backgroundColor = isReady ? .ypBlack : .ypGray
     }
 
     @objc func textChanged() {

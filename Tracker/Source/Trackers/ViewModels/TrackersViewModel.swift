@@ -14,24 +14,46 @@ final class TrackersViewModel {
         let trackers: [Tracker]
     }
 
+    enum PlaceholderState {
+        case hidden
+        case noTrackers
+        case nothingFound
+    }
+
     var onDataChanged: (() -> Void)?
-    var onPlaceholderVisibilityChanged: Binding<Bool>?
+    var onPlaceholderStateChanged: Binding<PlaceholderState>?
+    var onFiltersButtonVisibilityChanged: Binding<Bool>?
+    var onDateChanged: Binding<Date>?
 
     private let categoryStore: TrackerCategoryStore
     private let recordStore: TrackerRecordStore
+    private let filterStorage: TrackerFilterStorage
 
-    private let pinnedSectionTitle = "Закреплённые"
+    private let pinnedSectionTitle = L10n.Trackers.pinnedSection
 
     private(set) var selectedDate = Date()
+    private var searchQuery = ""
     private var sections: [Section] = []
     private var completedRecords: [TrackerRecord] = []
     private var categoryTitleByTrackerId: [UUID: String] = [:]
+    private var hasTrackersOnSelectedDate = false
 
-    init(categoryStore: TrackerCategoryStore, recordStore: TrackerRecordStore) {
+    init(
+        categoryStore: TrackerCategoryStore,
+        recordStore: TrackerRecordStore,
+        filterStorage: TrackerFilterStorage = TrackerFilterStorage(),
+        selectedDate: Date = Date()
+    ) {
         self.categoryStore = categoryStore
         self.recordStore = recordStore
+        self.filterStorage = filterStorage
+        self.selectedDate = selectedDate
         self.categoryStore.delegate = self
         self.recordStore.delegate = self
+    }
+
+    var currentFilter: TrackerFilter {
+        filterStorage.selectedFilter
     }
 
     func viewDidLoad() {
@@ -40,6 +62,27 @@ final class TrackersViewModel {
 
     func setDate(_ date: Date) {
         selectedDate = date
+        reload()
+    }
+
+    func setFilter(_ filter: TrackerFilter) {
+        switch filter {
+        case .today:
+            // «Трекеры на сегодня» сбрасывает фильтрацию и переводит календарь на сегодня
+            filterStorage.selectedFilter = .allTrackers
+            selectedDate = Date()
+            onDateChanged?(selectedDate)
+        case .allTrackers, .completed, .uncompleted:
+            filterStorage.selectedFilter = filter
+        }
+        reload()
+    }
+
+    func setSearchQuery(_ query: String?) {
+        let newQuery = (query ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard newQuery != searchQuery else { return }
+
+        searchQuery = newQuery
         reload()
     }
 
@@ -120,14 +163,20 @@ final class TrackersViewModel {
     private func reload() {
         completedRecords = (try? recordStore.records()) ?? []
         sections = makeSections(for: selectedDate)
-        onPlaceholderVisibilityChanged?(sections.isEmpty)
+        onPlaceholderStateChanged?(placeholderState())
+        onFiltersButtonVisibilityChanged?(hasTrackersOnSelectedDate)
         onDataChanged?()
+    }
+
+    private func placeholderState() -> PlaceholderState {
+        guard sections.isEmpty else { return .hidden }
+        let isFiltering = !searchQuery.isEmpty || currentFilter.isActive
+        return isFiltering ? .nothingFound : .noTrackers
     }
 
     private func makeSections(for date: Date) -> [Section] {
         categoryTitleByTrackerId = [:]
-
-        guard let selectedWeekDay = WeekDay(date: date) else { return [] }
+        hasTrackersOnSelectedDate = false
 
         let categories = (try? categoryStore.categories()) ?? []
 
@@ -135,7 +184,12 @@ final class TrackersViewModel {
         var categorySections: [Section] = []
 
         for category in categories {
-            let visible = category.trackers.filter { $0.schedule.contains(selectedWeekDay) }
+            let scheduled = category.trackers.filter { $0.isScheduled(on: date) }
+            if !scheduled.isEmpty {
+                hasTrackersOnSelectedDate = true
+            }
+
+            let visible = scheduled.filter { matchesSearch($0) && matchesFilter($0) }
             for tracker in visible {
                 categoryTitleByTrackerId[tracker.id] = category.title
             }
@@ -154,6 +208,19 @@ final class TrackersViewModel {
         }
         result.append(contentsOf: categorySections)
         return result
+    }
+
+    private func matchesSearch(_ tracker: Tracker) -> Bool {
+        guard !searchQuery.isEmpty else { return true }
+        return tracker.title.localizedCaseInsensitiveContains(searchQuery)
+    }
+
+    private func matchesFilter(_ tracker: Tracker) -> Bool {
+        switch currentFilter {
+        case .allTrackers, .today: return true
+        case .completed: return isCompleted(tracker)
+        case .uncompleted: return !isCompleted(tracker)
+        }
     }
 
     private func totalCompletions(for tracker: Tracker) -> Int {

@@ -25,9 +25,9 @@ final class EmojiPickerView: UIView {
 
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "Emoji"
+        label.text = L10n.TrackerCreation.emoji
         label.font = .ypBold19
-        label.textColor = .ypBlackDay
+        label.textColor = .ypBlack
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()

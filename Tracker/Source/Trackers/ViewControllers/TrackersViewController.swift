@@ -9,10 +9,32 @@ import UIKit
 
 final class TrackersViewController: UIViewController {
 
-    private let viewModel: TrackersViewModel
+    private enum Constants {
+        static let filtersButtonWidth: CGFloat = 114
+        static let filtersButtonHeight: CGFloat = 50
+        static let searchFieldHeight: CGFloat = 36
+        static let datePickerWidth: CGFloat = 110
+        /// Отступ снизу, чтобы кнопка «Фильтры» не перекрывала последние ячейки
+        static let collectionBottomInset: CGFloat = 82
+    }
 
-    init(categoryStore: TrackerCategoryStore, recordStore: TrackerRecordStore) {
-        self.viewModel = TrackersViewModel(categoryStore: categoryStore, recordStore: recordStore)
+    private let viewModel: TrackersViewModel
+    private let analyticsService: AnalyticsService
+
+    init(
+        categoryStore: TrackerCategoryStore,
+        recordStore: TrackerRecordStore,
+        filterStorage: TrackerFilterStorage = TrackerFilterStorage(),
+        selectedDate: Date = Date(),
+        analyticsService: AnalyticsService = .shared
+    ) {
+        self.viewModel = TrackersViewModel(
+            categoryStore: categoryStore,
+            recordStore: recordStore,
+            filterStorage: filterStorage,
+            selectedDate: selectedDate
+        )
+        self.analyticsService = analyticsService
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -33,7 +55,7 @@ final class TrackersViewController: UIViewController {
 
     private let placeholderLabel: UILabel = {
         let label = UILabel()
-        label.text = "Что будем отслеживать?"
+        label.text = L10n.Trackers.placeholder
         label.font = .ypRegular12
         label.textColor = .label
         label.textAlignment = .center
@@ -50,6 +72,18 @@ final class TrackersViewController: UIViewController {
         return stackView
     }()
 
+    private lazy var searchTextField: UISearchTextField = {
+        let searchTextField = UISearchTextField()
+        searchTextField.placeholder = L10n.Trackers.searchPlaceholder
+        searchTextField.font = .ypRegular17
+        searchTextField.returnKeyType = .search
+        searchTextField.clearButtonMode = .whileEditing
+        searchTextField.delegate = self
+        searchTextField.addTarget(self, action: #selector(searchTextDidChange), for: .editingChanged)
+        searchTextField.translatesAutoresizingMaskIntoConstraints = false
+        return searchTextField
+    }()
+
     private lazy var datePicker: UIDatePicker = {
         let picker = UIDatePicker()
         picker.preferredDatePickerStyle = .compact
@@ -57,9 +91,22 @@ final class TrackersViewController: UIViewController {
         picker.date = viewModel.selectedDate
         picker.addTarget(self, action: #selector(dateChanged), for: .valueChanged)
         NSLayoutConstraint.activate([
-            picker.widthAnchor.constraint(equalToConstant: 110)
+            picker.widthAnchor.constraint(equalToConstant: Constants.datePickerWidth)
         ])
         return picker
+    }()
+
+    private lazy var filtersButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle(L10n.Filters.title, for: .normal)
+        button.setTitleColor(.ypWhiteDay, for: .normal)
+        button.titleLabel?.font = .ypRegular17
+        button.backgroundColor = .ypBlue
+        button.layer.cornerRadius = Dimen.x4
+        button.isHidden = true
+        button.addTarget(self, action: #selector(filtersButtonTapped), for: .touchUpInside)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
     }()
 
     private lazy var collectionView: UICollectionView = {
@@ -70,6 +117,7 @@ final class TrackersViewController: UIViewController {
 
         collectionView.showsVerticalScrollIndicator = false
         collectionView.showsHorizontalScrollIndicator = false
+        collectionView.keyboardDismissMode = .onDrag
 
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         collectionView.register(TrackerCell.self, forCellWithReuseIdentifier: TrackerCell.reuseId)
@@ -85,10 +133,23 @@ final class TrackersViewController: UIViewController {
         super.viewDidLoad()
         setupView()
         setupNavigationBar()
+        setupSearchTextField()
         setupCollectionView()
         setupPlaceholder()
+        setupFiltersButton()
+        setupKeyboardDismiss()
         bindViewModel()
         viewModel.viewDidLoad()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        analyticsService.report(event: .open, screen: .main)
+    }
+
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        analyticsService.report(event: .close, screen: .main)
     }
 }
 
@@ -100,7 +161,7 @@ private extension TrackersViewController {
     }
 
     func setupNavigationBar() {
-        title = "Трекеры"
+        title = L10n.Trackers.title
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
 
@@ -116,11 +177,45 @@ private extension TrackersViewController {
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: datePicker)
     }
 
-    func setupCollectionView() {
-        view.addSubview(collectionView)
+    func setupSearchTextField() {
+        view.addSubview(searchTextField)
 
         NSLayoutConstraint.activate([
-            collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: Dimen.x2),
+            searchTextField.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: Dimen.x2),
+            searchTextField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: Dimen.x4),
+            searchTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -Dimen.x4),
+            searchTextField.heightAnchor.constraint(equalToConstant: Constants.searchFieldHeight)
+        ])
+    }
+
+    /// Тап по свободной области экрана снимает фокус с поисковой строки.
+    /// `cancelsTouchesInView` выключен, чтобы нажатия доходили до ячеек и кнопок.
+    func setupKeyboardDismiss() {
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(hideKeyboard))
+        tapGesture.cancelsTouchesInView = false
+        view.addGestureRecognizer(tapGesture)
+    }
+
+    func setupFiltersButton() {
+        view.addSubview(filtersButton)
+
+        NSLayoutConstraint.activate([
+            filtersButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            filtersButton.bottomAnchor.constraint(
+                equalTo: view.safeAreaLayoutGuide.bottomAnchor,
+                constant: -Dimen.x4
+            ),
+            filtersButton.widthAnchor.constraint(equalToConstant: Constants.filtersButtonWidth),
+            filtersButton.heightAnchor.constraint(equalToConstant: Constants.filtersButtonHeight)
+        ])
+    }
+
+    func setupCollectionView() {
+        view.addSubview(collectionView)
+        collectionView.contentInset.bottom = Constants.collectionBottomInset
+
+        NSLayoutConstraint.activate([
+            collectionView.topAnchor.constraint(equalTo: searchTextField.bottomAnchor, constant: Dimen.x2),
             collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: Dimen.x4),
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -Dimen.x4),
             collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
@@ -144,9 +239,34 @@ private extension TrackersViewController {
             self?.collectionView.reloadData()
         }
 
-        viewModel.onPlaceholderVisibilityChanged = { [weak self] shouldShowPlaceholder in
-            self?.placeholderStackView.isHidden = !shouldShowPlaceholder
-            self?.collectionView.isHidden = shouldShowPlaceholder
+        viewModel.onPlaceholderStateChanged = { [weak self] state in
+            self?.showPlaceholder(state)
+        }
+
+        viewModel.onFiltersButtonVisibilityChanged = { [weak self] isVisible in
+            self?.filtersButton.isHidden = !isVisible
+        }
+
+        viewModel.onDateChanged = { [weak self] date in
+            self?.datePicker.date = date
+        }
+    }
+
+    func showPlaceholder(_ state: TrackersViewModel.PlaceholderState) {
+        switch state {
+        case .hidden:
+            placeholderStackView.isHidden = true
+            collectionView.isHidden = false
+        case .noTrackers:
+            placeholderImageView.image = UIImage(resource: .emptyTrackers)
+            placeholderLabel.text = L10n.Trackers.placeholder
+            placeholderStackView.isHidden = false
+            collectionView.isHidden = true
+        case .nothingFound:
+            placeholderImageView.image = UIImage(resource: .notFoundTrackers)
+            placeholderLabel.text = L10n.Trackers.nothingFound
+            placeholderStackView.isHidden = false
+            collectionView.isHidden = true
         }
     }
 
@@ -202,7 +322,31 @@ private extension TrackersViewController {
         viewModel.setDate(sender.date)
     }
 
+    @objc func searchTextDidChange(_ sender: UISearchTextField) {
+        viewModel.setSearchQuery(sender.text)
+    }
+
+    @objc func hideKeyboard() {
+        view.endEditing(true)
+    }
+
+    @objc func filtersButtonTapped() {
+        analyticsService.report(event: .click, screen: .main, item: .filter)
+
+        let filtersViewModel = FiltersViewModel(selectedFilter: viewModel.currentFilter)
+        let filtersViewController = FiltersViewController(viewModel: filtersViewModel)
+        filtersViewController.onFilterSelect = { [weak self] filter in
+            self?.viewModel.setFilter(filter)
+        }
+
+        let navigationController = UINavigationController(rootViewController: filtersViewController)
+        navigationController.modalPresentationStyle = .pageSheet
+        present(navigationController, animated: true)
+    }
+
     @objc func addTrackerButtonTapped() {
+        analyticsService.report(event: .click, screen: .main, item: .addTrack)
+
         let typeSelectionViewController = TrackerTypeSelectionViewController()
         let navigationController = UINavigationController(rootViewController: typeSelectionViewController)
         navigationController.modalPresentationStyle = .pageSheet
@@ -218,12 +362,29 @@ private extension TrackersViewController {
         kind: TrackerKind,
         in navigationController: UINavigationController?
     ) {
-        let creationViewController = TrackerCreationViewController(kind: kind)
+        let creationViewController = TrackerCreationViewController(
+            kind: kind,
+            selectedDate: viewModel.selectedDate
+        )
         creationViewController.onCreate = { [weak self] tracker, categoryTitle in
             self?.viewModel.addTracker(tracker, categoryTitle: categoryTitle)
         }
 
         navigationController?.pushViewController(creationViewController, animated: true)
+    }
+}
+
+// MARK: - UITextFieldDelegate
+
+extension TrackersViewController: UITextFieldDelegate {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        textField.resignFirstResponder()
+        return true
+    }
+
+    func textFieldShouldClear(_ textField: UITextField) -> Bool {
+        viewModel.setSearchQuery(nil)
+        return true
     }
 }
 
@@ -257,6 +418,7 @@ extension TrackersViewController: UICollectionViewDataSource {
             date: model.date
         )
         cell.onToggle = { [weak self] in
+            self?.analyticsService.report(event: .click, screen: .main, item: .track)
             self?.viewModel.toggleCompletion(for: model.tracker)
         }
 
@@ -296,14 +458,18 @@ extension TrackersViewController: UICollectionViewDelegate {
         return UIContextMenuConfiguration(identifier: identifier, previewProvider: nil) { [weak self] _ in
             guard let self else { return nil }
 
-            let pinTitle = self.viewModel.isPinned(at: indexPath) ? "Открепить" : "Закрепить"
+            let pinTitle = self.viewModel.isPinned(at: indexPath)
+            ? L10n.Trackers.unpin
+            : L10n.Trackers.pin
             let pinAction = UIAction(title: pinTitle) { [weak self] _ in
                 self?.viewModel.togglePin(at: indexPath)
             }
-            let editAction = UIAction(title: "Редактировать") { [weak self] _ in
+            let editAction = UIAction(title: L10n.Common.edit) { [weak self] _ in
+                self?.analyticsService.report(event: .click, screen: .main, item: .edit)
                 self?.editTracker(at: indexPath)
             }
-            let deleteAction = UIAction(title: "Удалить", attributes: .destructive) { [weak self] _ in
+            let deleteAction = UIAction(title: L10n.Common.delete, attributes: .destructive) { [weak self] _ in
+                self?.analyticsService.report(event: .click, screen: .main, item: .delete)
                 self?.confirmDeleteTracker(at: indexPath)
             }
             return UIMenu(children: [pinAction, editAction, deleteAction])
@@ -376,13 +542,13 @@ private extension TrackersViewController {
     func confirmDeleteTracker(at indexPath: IndexPath) {
         let alert = UIAlertController(
             title: nil,
-            message: "Уверены, что хотите удалить трекер?",
+            message: L10n.Trackers.deleteConfirmation,
             preferredStyle: .actionSheet
         )
-        alert.addAction(UIAlertAction(title: "Удалить", style: .destructive) { [weak self] _ in
+        alert.addAction(UIAlertAction(title: L10n.Common.delete, style: .destructive) { [weak self] _ in
             self?.viewModel.deleteTracker(at: indexPath)
         })
-        alert.addAction(UIAlertAction(title: "Отменить", style: .cancel))
+        alert.addAction(UIAlertAction(title: L10n.Common.cancel, style: .cancel))
 
         if let popover = alert.popoverPresentationController,
            let cell = collectionView.cellForItem(at: indexPath) {

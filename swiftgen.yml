@@ -1,0 +1,16 @@
+# SwiftGen configuration
+# Генерируется в фазе «Run Script: SwiftGen», которая выполняется до «Compile Sources».
+# Результат лежит в ./Generated и не хранится в git (см. .gitignore).
+
+input_dir: Tracker/Resources/Localization
+output_dir: Generated
+
+strings:
+  inputs:
+    - ru.lproj
+  outputs:
+    - templateName: structured-swift5
+      output: Strings+Generated.swift
+      params:
+        enumName: L10n
+        publicAccess: false
